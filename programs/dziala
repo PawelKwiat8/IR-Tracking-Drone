@@ -1,0 +1,80 @@
+#include <Arduino.h>
+
+// === KONFIGURACJA PINÓW ===
+#define RX_PIN_MSP 25
+#define TX_PIN_MSP 26
+
+// Funkcja do wysyłania danych o kanałach RC przez MSP (komenda MSP_SET_RAW_RC, ID = 200)
+void send_msp_rc_channels(uint16_t channels[16]) {
+  uint8_t payload_size = 32;
+  uint8_t command_id = 200;
+  Serial2.write('$');
+  Serial2.write('M');
+  Serial2.write('<');
+  Serial2.write(payload_size);
+  Serial2.write(command_id);
+  uint8_t checksum = 0;
+  checksum ^= payload_size;
+  checksum ^= command_id;
+  for (int i = 0; i < 16; i++) {
+    uint8_t lsb = channels[i] & 0xFF;
+    uint8_t msb = (channels[i] >> 8) & 0xFF;
+    Serial2.write(lsb);
+    Serial2.write(msb);
+    checksum ^= lsb;
+    checksum ^= msb;
+  }
+  Serial2.write(checksum);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("--- START AUTOMATYCZNEGO TESTU UZBRAJANIA (MSP) ---");
+  Serial.println("PAMIĘTAJ O ZDJĘCIU ŚMIGIEŁ!");
+  Serial.println("Dron uzbroi się na 5 sekund po 5 sekundach od startu.");
+
+  // MSP używa standardowej prędkości 115200 i NIE jest odwrócony
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN_MSP, TX_PIN_MSP);
+  
+  Serial.println("Port Serial2 dla MSP uruchomiony.");
+}
+
+void loop() {
+  uint16_t channels[16];
+
+  // Ustawienie drążków w pozycji bezpiecznej do uzbrojenia
+  channels[0] = 1500; // Roll (Aileron) w centrum
+  channels[1] = 1500; // Pitch (Elevator) w centrum
+  channels[2] = 1000; // Throttle na minimum
+  channels[3] = 1500; // Yaw w centrum
+
+  // === AUTOMATYCZNY CYKL UZBRAJANIA ===
+  // millis() zwraca czas w milisekundach od uruchomienia ESP32
+  // Dzielimy przez 10000, aby uzyskać 10-sekundowy cykl.
+  // Operator % (modulo) daje resztę z dzielenia.
+  if ((millis() / 1000) % 10 < 5) {
+    // Pierwsze 5 sekund cyklu -> ROZBRÓJ
+    channels[4] = 1000; // AUX1 (Arm) na LOW
+  } else {
+    // Następne 5 sekund cyklu -> UZBRÓJ
+    channels[4] = 1500; // AUX1 (Arm) na HIGH
+  }
+
+  // Ustawienie pozostałych kanałów na wartość minimalną
+  for (int i = 5; i < 16; i++) {
+    channels[i] = 1000;
+  }
+
+  // Wysyłamy ramkę MSP
+  send_msp_rc_channels(channels);
+
+  // Debugowanie w monitorze szeregowym
+  if (channels[4] == 2000) {
+    Serial.println("Status: ARM (AUX1 = 2000)");
+  } else {
+    Serial.println("Status: DISARMED (AUX1 = 1000)");
+  }
+  
+  delay(20); // Wysyłaj dane co ~50Hz
+}
