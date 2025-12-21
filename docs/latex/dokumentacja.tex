@@ -1,0 +1,98 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Język i kodowanie ---
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% --- Typografia i układ strony ---
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Matematyka i jednostki ---
+\usepackage{amsmath}
+
+% --- Grafika i listy ---
+\usepackage{graphicx}
+
+% --- Linki (na końcu, żeby "podpiąć" się pod inne pakiety) ---
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={System optycznego śledzenia pozycji drona w przestrzeni 3D},
+  pdfauthor={Imię i nazwisko},
+  pdfsubject={Dokumentacja projektu},
+  pdfkeywords={dron, śledzenie, podczerwień, triangulacja, OpenCV},
+}
+\urlstyle{same}
+
+\title{System optycznego śledzenia pozycji drona w przestrzeni 3D z wykorzystaniem zmodyfikowanych kamer podczerwieni}
+\author{Imię i nazwisko}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Dokument opisuje założenia oraz kluczowe elementy budżetowego systemu optycznego śledzenia pozycji drona w przestrzeni 3D, opartego na zmodyfikowanych kamerach podczerwieni i aktywnych znacznikach IR. Przedstawiono modyfikacje sprzętowe, koncepcję układu wielokamerowego oraz ogólny zarys procesu kalibracji i triangulacji w celu estymacji położenia w czasie rzeczywistym.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+\section{Wstęp}
+Precyzyjne pozycjonowanie bezzałogowych statków powietrznych (BSP) w przestrzeniach zamkniętych stanowi istotne wyzwanie badawcze ze względu na brak dostępu do sygnału GPS. Rozwiązania komercyjne, takie jak systemy Vicon czy OptiTrack, oferują milimetrową dokładność, jednak ich koszt jest często zaporowy dla mniejszych projektów badawczych.
+
+Niniejsza praca opisuje proces budowy budżetowego systemu typu \textit{Optical Motion Capture}, opartego na popularnych kamerach PlayStation Eye. System wykorzystuje aktywne znaczniki w postaci diod IR LED zamontowanych na dronie oraz algorytmy przetwarzania obrazu do estymacji pozycji obiektu w czasie rzeczywistym.
+
+\section{Charakterystyka sprzętowa}
+
+\subsection{Modyfikacja sensorów optycznych}
+Kluczowym elementem systemu jest wykorzystanie kamer PlayStation Eye, które ze względu na możliwość pracy z częstotliwością do 125--187~FPS idealnie nadają się do śledzenia szybko poruszających się obiektów. Standardowe sensory zostały poddane następującym modyfikacjom:
+\begin{enumerate}
+    \item \textbf{Usunięcie filtra IR-Cut:} Fabryczny filtr blokujący promieniowanie podczerwone został mechanicznie usunięty z układu optycznego obiektywu.
+    \item \textbf{Zastosowanie filtra światła widzialnego:} W celu izolacji diod IR od tła zastosowano filtr wykonany z nośnika magnetycznego dyskietki 3{,}5''. Materiał ten charakteryzuje się wysoką przepuszczalnością dla pasma podczerwieni przy jednoczesnym blokowaniu spektrum widzialnego.
+\end{enumerate}
+
+\subsection{System znaczników (Active Markers)}
+Na ramie drona zainstalowano trzy diody IR~LED (zakupione w serwisie AliExpress) o szerokim kącie świecenia. Układ znaczników został zaprojektowany z dbałością o symetrię i stabilność geometryczną:
+\begin{itemize}
+    \item \textbf{Geometria:} Diody są ustawione wierzchołkowo, tworząc trójkąt równoboczny. 
+    \item \textbf{Montaż:} Każda z diod została umieszczona na sztywnym przewodzie o identycznej długości. Przewody te wychodzą symetrycznie ze środka podstawy ramy drona, kierując się odpowiednio: w lewo, w prawo oraz w przód. 
+    \item \textbf{Zalety:} Taki układ pozwala na jednoznaczne określenie wektora orientacji przodu drona oraz ułatwia implementację algorytmów \textit{Perspective-n-Point} (PnP) przy użyciu rzutów 2D na matrycę kamery.
+\end{itemize}
+
+\subsection{Układ zasilania diod}
+System zasilania został zintegrowany z główną magistralą drona. Każda z trzech diod IR~LED jest zasilana napięciem 5~V. W celu zapewnienia optymalnych parametrów pracy i ochrony diod przed uszkodzeniem w obwodzie każdej z nich zastosowano rezystor ograniczający prąd o wartości 150~\(\Omega\).
+
+\section{Środowisko testowe i cele projektu}
+Badania i testy systemu odbywają się w typowym pomieszczeniu domowym o przybliżonych wymiarach \(3 \times 5\)\,\(\mathrm{m}\). Docelowa konfiguracja zakłada rozmieszczenie kamer na ścianach w celu pokrycia jak największego obszaru roboczego.
+
+Głównym celem projektu jest opracowanie systemu umożliwiającego w pełni autonomiczny lot drona wewnątrz pomieszczenia. System pozycjonowania ma dostarczać dane o położeniu do kontrolera lotu, co pozwoli na realizację zadanych scenariuszy, takich jak:
+\begin{itemize}
+    \item Stabilny zawis w określonym punkcie przestrzeni (\textit{hovering}),
+    \item Lot po zadanym torze (np. wykonywanie okręgów o zadanym promieniu),
+    \item Precyzyjne lądowanie w punkcie startu.
+\end{itemize}
+
+\section{Analiza koncepcji śledzenia (układ wielokamerowy)}
+Inspirując się rozwiązaniami typu \textit{DIY Motion Capture}, system docelowo zakłada wykorzystanie wielu kamer rozmieszczonych na ścianach pomieszczenia. Proces ten wymaga:
+\begin{enumerate}
+    \item \textbf{Kalibracji wewnętrznej:} Wyznaczenie macierzy parametrów każdej z kamer (\textit{intrinsic parameters}).
+    \item \textbf{Kalibracji zewnętrznej:} Określenie pozycji i rotacji kamer względem wspólnego układu odniesienia (np. przy użyciu metody \textit{Wanding} widocznej w materiałach źródłowych).
+    \item \textbf{Triangulacji:} Wyznaczenie współrzędnych $(x, y, z)$ na podstawie przecięcia promieni z co najmniej dwóch kamer.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{yt_ref} 
+Inspiracja systemem multi-kamery: \url{https://www.youtube.com/watch?v=0ql20JKrscQ}.
+\bibitem{opencv}
+Dokumentacja biblioteki OpenCV dla algorytmów wykrywania obiektów.
+\end{thebibliography}
+
+\end{document}
+
+
