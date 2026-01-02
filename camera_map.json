@@ -1,0 +1,5 @@
+{
+    "cam_1": "/dev/video2",
+    "cam_2": "/dev/video3",
+    "cam_3": "/dev/video4"
+}

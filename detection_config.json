@@ -1,0 +1,16 @@
+{
+    "exposure": 102,
+    "gain": 255,
+    "threshold": 25,
+    "blur_size": 5,
+    "blur_type": 1,
+    "morph_open": 0,
+    "morph_close": 0,
+    "min_area": 1,
+    "max_area": 252,
+    "min_circularity": 0.0,
+    "peak_threshold": 0.0,
+    "peak_power": 0.0,
+    "filter_mincutoff": 0.001,
+    "filter_beta": 0.1
+}
