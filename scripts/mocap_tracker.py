@@ -294,9 +294,9 @@ class MocapTracker:
     def find_cameras(self):
         """Wyszukuje i inicjalizuje kamery."""
         print("Łączenie z kamerami PS3 Eye...")
-        # Preferowane indeksy (żeby najpierw znaleźć zewnętrzne)
+        # Sprawdzamy indeksy od 0 do 10
         indices = []
-        for i in [2, 3, 4, 1, 5, 0]:
+        for i in range(11):
             if os.path.exists(f"/dev/video{i}"):
                 cap = cv2.VideoCapture(i, cv2.CAP_V4L2)
                 if cap.isOpened():
@@ -305,7 +305,7 @@ class MocapTracker:
                         indices.append(i)
                         print(f" [+] Połączono: /dev/video{i}")
                     cap.release()
-            if len(indices) >= 3: break
+            if len(indices) >= 4: break
         
         if len(indices) < 2:
             print(" [ERROR] Wymagane minimum 2 kamery do działania systemu!")

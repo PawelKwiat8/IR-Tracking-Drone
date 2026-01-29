@@ -7,11 +7,11 @@ import os
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 def ir_led_tracker(width=640, height=480, fps=60):
-    print("Szukanie kamer PS3 Eye (pomijając indeks 0 - laptop)...")
+    print("Szukanie kamer PS3 Eye...")
     
     caps = []
-    # Szukamy kamer w zakresie od 1 do 12
-    for idx in range(1, 13):
+    # Szukamy kamer w zakresie od 0 do 12
+    for idx in range(0, 13):
         if len(caps) >= 3:
             break
             

@@ -691,7 +691,7 @@ def main():
     # Znajdź kamery
     print("Szukam kamer...")
     indices = []
-    for i in [2, 3, 4, 1, 5, 0]:
+    for i in range(11):
         if os.path.exists(f"/dev/video{i}"):
             cap = cv2.VideoCapture(i, cv2.CAP_V4L2)
             if cap.isOpened():
@@ -700,7 +700,7 @@ def main():
                     indices.append(i)
                     print(f"  [+] Znaleziono: /dev/video{i}")
                 cap.release()
-        if len(indices) >= 3:
+        if len(indices) >= 4:
             break
     
     if not indices:
