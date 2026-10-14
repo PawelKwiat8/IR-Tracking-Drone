@@ -1,0 +1,26 @@
+{
+    "zrodlo": "auto",
+    "szerokosc": 640,
+    "wysokosc": 480,
+    "fps": 60,
+
+    "ekspozycja": 40,
+    "wzmocnienie": 10,
+
+    "prog": 60,
+    "min_pole": 2,
+    "max_pole": 400,
+
+    "pozycja_obiektywu": "75",
+    "ogniskowa_nominalna_px": {"75": 521, "56": 752},
+
+    "szachownica_rogi": [9, 6],
+    "szachownica_kwadrat_mm": 29.0,
+
+    "gwiazda_mm": [
+        [75.0, 0.0, 0.0],
+        [33.6, 65.9, 0.0],
+        [-75.0, 0.0, 0.0],
+        [11.4, -72.1, 0.0]
+    ]
+}
